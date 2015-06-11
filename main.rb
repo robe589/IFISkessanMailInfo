@@ -63,7 +63,7 @@ def saveKessanToCsv(getDateRenge,storagePath)
 				data=Array.new
 				node.xpath(strXpath).each_with_index do |node,i|
 					data[i]=node.text
-				end	
+				end
 				csv<<data
 			end
 			page+=1
@@ -121,7 +121,7 @@ def searchCsv(getDateRange,searchStockList,storagePath)
 		csv.each do |row|
 			searchStockList.each do |search|
 				if row[0].to_i ==search['code']#見つかった
-					kessanList.push(search['code'])
+					kessanList.push(search['code'].to_s+':'+row[1])
 					search['isNot']=false
 				end
 			end
