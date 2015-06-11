@@ -7,6 +7,9 @@ require 'date'
 require 'csv'
 require 'fileutils'
 
+require './account'
+require './GmailSend'
+
 def main()
 	getDateRenge=[Date.today,Date.today]#データ取得日及び表示日の範囲
 	storagePath='csv/'#日付別の決算企業ファイルの保存パス
@@ -20,6 +23,11 @@ def main()
 	kessanList=showHoldStock(getDateRenge,readFileName,storagePath)
 	
 	p kessanList
+	
+
+	gmail=GmailSend.new('ikimono.miwa589@gmail.com',$password)
+	gmail.sendMail('ikimono.miwa589@gmail.com','test','test')
+
 end
 
 def readDateToSite(getDateRenge,storagePath)
