@@ -3,3 +3,4 @@ csv/
 vendor/
 .bundle/config
 holdStockList.csv
+account.rb
