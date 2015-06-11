@@ -26,8 +26,3 @@ class GmailSend
 		@@mail.deliver
 	end
 end
-
-=begin
-gmail=GmailSend.new('ikimono.miwa589@gmail.com',$password)
-gmail.sendMail('ikimono.miwa589@gmail.com','test','test')
-=end
