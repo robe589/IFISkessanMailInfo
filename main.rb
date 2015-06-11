@@ -23,10 +23,14 @@ def main()
 	kessanList=showHoldStock(getDateRenge,readFileName,storagePath)
 	
 	p kessanList
-	
-	str="本日の決算銘柄は\n"
-	kessanList.each do |code|
-		str=str+code.to_s+"\n"
+	kessanList=nil
+	if kessanList == nil
+		str="本日の決算銘柄はありません\n"
+	else
+		str="本日の決算銘柄は\n"
+		kessanList.each do |code|
+			str=str+code.to_s+"\n"
+		end
 	end
 
 	gmail=GmailSend.new('ikimono.miwa589@gmail.com',$password)
