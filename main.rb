@@ -24,9 +24,13 @@ def main()
 	
 	p kessanList
 	
+	str="本日の決算銘柄は\n"
+	kessanList.each do |code|
+		str=str+code.to_s+"\n"
+	end
 
 	gmail=GmailSend.new('ikimono.miwa589@gmail.com',$password)
-	gmail.sendMail('ikimono.miwa589@gmail.com','test','test')
+	gmail.sendMail('stockInfo589@gmail.com','本日の決算銘柄',str)
 
 end
 
