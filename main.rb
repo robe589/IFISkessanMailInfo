@@ -27,7 +27,7 @@ def main()
 	if kessanList == nil
 		str="本日、保有銘柄の決算はありません\n"
 	else
-		str="本日の保有銘柄の決算はは\n"
+		str="本日の保有銘柄の決算は\n"
 		kessanList.each do |code|
 			str=str+code.to_s+"\n"
 		end
