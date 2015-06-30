@@ -13,7 +13,7 @@ require './GmailSend'
 def main()
 	getDateRenge=[Date.today,Date.today]#データ取得日及び表示日の範囲
 	storagePath='csv/'#日付別の決算企業ファイルの保存パス
-	readFileName='holdStockList.csv'
+	readFileName='../holdStockList.csv'
 	isStdIoScreen=true
 	logPath='log/log.txt'
 
@@ -23,8 +23,8 @@ def main()
 	readDateToSite(getDateRenge,storagePath)
 	kessanList=showHoldStock(getDateRenge,readFileName,storagePath)
 	
-	p kessanList
-	if kessanList == nil
+	p kessanList[0]
+	if kessanList[0] == nil
 		str="本日、保有銘柄の決算はありません\n"
 	else
 		str="本日の保有銘柄の決算は\n"
@@ -32,10 +32,11 @@ def main()
 			str=str+code.to_s+"\n"
 		end
 	end
-
+	pp str
 	#本日のすべての決算リストを取得、表示
 	allKessanList=showAllData(getDateRenge,storagePath)	
-	if allKessanList == nil
+	pp allKessanList
+	if allKessanList[0] == nil
 		str+="\n本日の決算銘柄はありません\n"
 	else
 		str+="本日の決算銘柄は\n"
@@ -59,11 +60,9 @@ end
 def showAllData(getDateRenge,storagePath)
 	holdStockList=Array.new
 	holdStockList[0]='all'
-	error=searchCsv(getDateRenge,holdStockList,storagePath)	
-	if error==-1
-		puts'先にデータを取得してください'
-		return -1
-	end
+	list=searchCsv(getDateRenge,holdStockList,storagePath)	
+
+	return list
 end
 
 def saveKessanToCsv(getDateRenge,storagePath)
@@ -147,6 +146,7 @@ def searchCsv(getDateRange,searchStockList,storagePath)
 		begin 
 			csv=CSV.open(storagePath+dateStr+'.csv',"r") 
 		rescue Errno::ENOENT
+			puts "エラー"
 			return -1;
 		end	
 		csv.each do |row|
