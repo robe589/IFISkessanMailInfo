@@ -13,7 +13,7 @@ require './GmailSend'
 def main()
 	getDateRenge=[Date.today,Date.today]#データ取得日及び表示日の範囲
 	storagePath='csv/'#日付別の決算企業ファイルの保存パス
-	readFileName='holdStockList.csv'
+	readFileName='../holdStockList.csv'
 	isStdIoScreen=true
 	logPath='log/log.txt'
 
@@ -23,7 +23,7 @@ def main()
 	kessanList=showHoldStock(getDateRenge,readFileName,storagePath)
 	
 	p kessanList
-	kessanList=nil
+	
 	if kessanList == nil
 		str="本日の決算銘柄はありません\n"
 	else
