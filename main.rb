@@ -19,16 +19,27 @@ def main()
 
 	FileUtils.mkdir_p('csv') unless FileTest.exist?('csv')
 	
+	#本日の保有銘柄の決算リストを取得、表示
 	readDateToSite(getDateRenge,storagePath)
 	kessanList=showHoldStock(getDateRenge,readFileName,storagePath)
 	
 	p kessanList
-	
 	if kessanList == nil
-		str="本日の決算銘柄はありません\n"
+		str="本日、保有銘柄の決算はありません\n"
+	else
+		str="本日の保有銘柄の決算はは\n"
+		kessanList.each do |code|
+			str=str+code.to_s+"\n"
+		end
+	end
+
+	#本日のすべての決算リストを取得、表示
+	allKessanList=showAllData(getDateRenge,io,storagePath)	
+	if allKessanList == nil
+		str="\n本日の決算銘柄はありません\n"
 	else
 		str="本日の決算銘柄は\n"
-		kessanList.each do |code|
+		allKessanList.each do |code|
 			str=str+code.to_s+"\n"
 		end
 	end
@@ -43,6 +54,16 @@ def readDateToSite(getDateRenge,storagePath)
 		File.delete file
 	end
 	saveKessanToCsv(getDateRenge,storagePath)
+end
+
+def showAllData(getDateRenge,io,storagePath)
+	holdStockList=Array.new
+	holdStockList[0]='all'
+	error=searchCsv(getDateRenge,holdStockList,storagePath)	
+	if error==-1
+		puts'先にデータを取得してください'
+		return -1
+	end
 end
 
 def saveKessanToCsv(getDateRenge,storagePath)
@@ -112,6 +133,12 @@ def searchCsv(getDateRange,searchStockList,storagePath)
 	startDate=getDateRange[0]
 	endDate=getDateRange[1]
 
+	if searchStockList[0] =='all'
+		isShowAll =true
+	else
+		isShowAll =false
+	end
+
 	kessanList=Array.new
 	begin
 		isDayShowItem=false
@@ -123,10 +150,14 @@ def searchCsv(getDateRange,searchStockList,storagePath)
 			return -1;
 		end	
 		csv.each do |row|
-			searchStockList.each do |search|
-				if row[0].to_i ==search['code']#見つかった
-					kessanList.push(search['code'].to_s+':'+row[1])
-					search['isNot']=false
+			if isShowAll==true
+				kessanList.push(row[0]+':'+row[1])
+			else
+				searchStockList.each do |search|
+					if row[0].to_i ==search['code']#見つかった
+						kessanList.push(search['code'].to_s+':'+row[1])
+						search['isNot']=false
+					end
 				end
 			end
 		end
@@ -137,4 +168,4 @@ def searchCsv(getDateRange,searchStockList,storagePath)
 	return kessanList
 end
 
-main()
+
