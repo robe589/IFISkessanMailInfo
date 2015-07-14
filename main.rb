@@ -11,7 +11,7 @@ require './account'
 require './GmailSend'
 
 def main()
-	getDateRenge=[Date.today,Date.today]#データ取得日及び表示日の範囲
+	getDate=Date.today#データ取得日及び表示日の範囲
 	storagePath='csv/'#日付別の決算企業ファイルの保存パス
 	readFileName='../holdStockList.csv'
 	isStdIoScreen=true
@@ -20,8 +20,8 @@ def main()
 	FileUtils.mkdir_p('csv') unless FileTest.exist?('csv')
 	
 	#本日の保有銘柄の決算リストを取得、表示
-	readDateToSite(getDateRenge,storagePath)
-	kessanList=showHoldStock(getDateRenge,readFileName,storagePath)
+	readDateToSite(getDate,storagePath)
+	kessanList=showHoldStock(getDate,readFileName,storagePath)
 	
 	p kessanList[0]
 	if kessanList[0] == nil
@@ -34,7 +34,7 @@ def main()
 	end
 	pp str
 	#本日のすべての決算リストを取得、表示
-	allKessanList=showAllData(getDateRenge,storagePath)	
+	allKessanList=showAllData(getDate,storagePath)	
 	pp allKessanList
 	if allKessanList[0] == nil
 		str+="\n本日の決算銘柄はありません\n"
@@ -50,57 +50,53 @@ def main()
 
 end
 
-def readDateToSite(getDateRenge,storagePath)
+def readDateToSite(getDate,storagePath)
+	#現在決算銘柄を保存したcsvファイルを削除
 	Dir.glob(storagePath+"*").each do |file|
 		File.delete file
 	end
-	saveKessanToCsv(getDateRenge,storagePath)
+	saveKessanToCsv(getDate,storagePath)
 end
 
-def showAllData(getDateRenge,storagePath)
+def saveKessanToCsv(getDate,storagePath)
+	isNextPage=false
+	#その日の決算銘柄をCSVに保存
+	dateStr=getDate.strftime("%Y%m%d")
+	page=1
+	csv=CSV.open(storagePath+dateStr+'.csv','wb')
+	begin
+		isNextPage=false 
+		url='http://kabuyoho.ifis.co.jp/index.php?action=tp1&sa=schedule&ym='+dateStr[0..5]+'&lst='+dateStr+'&pageID='+page.to_s
+		p url
+		doc=getHtmlData(url)
+		
+		doc.xpath('//tr[@class="line"]').each do |node|
+			data=Array.new
+			node.xpath('./td/a').each do |node1|
+				data.push(node1.text)
+			end
+			csv<<data
+		end
+		page+=1
+		#次のページがあるかどうか
+		if doc.xpath('//a[@title="next page"]').empty? ==false
+			isNextPage=true
+		end
+	end while isNextPage==true
+	csv.close
+end
+
+def showAllData(getDate,storagePath)
 	holdStockList=Array.new
 	holdStockList[0]='all'
-	list=searchCsv(getDateRenge,holdStockList,storagePath)	
+	list=searchCsv(getDate,holdStockList,storagePath)	
 
 	return list
 end
 
-def saveKessanToCsv(getDateRenge,storagePath)
-	#現在日時を取得
-	startDate=getDateRenge[0]
-	endDate=getDateRenge[1]
-	isNextPage=false
-	begin
-		dateStr=startDate.strftime("%Y%m%d")
-		page=1
-		csv=CSV.open(storagePath+dateStr+'.csv','wb')
-		begin
-			isNextPage=false 
-			url='http://kabuyoho.ifis.co.jp/index.php?action=tp1&sa=schedule&ym='+dateStr[0..5]+'&lst='+dateStr+'&pageID='+page.to_s
-			p url
-			doc=getHtmlData(url)
-			
-			#その日の決算銘柄をCSVに保存
-			strXpath='//tr[@class="line"]';
-			doc.xpath(strXpath).each_with_index do |node,i|
-				strXpath='./td/a'
-				data=Array.new
-				node.xpath(strXpath).each_with_index do |node,i|
-					data[i]=node.text
-				end
-				csv<<data
-			end
-			page+=1
-			doc.xpath('//a[@title="next page"]').each do |node|
-				isNextPage=true
-			end
-		end while isNextPage==true
-		csv.close
-		startDate+=1#次の日に
-	end while startDate <= endDate
-end
 
-def showHoldStock(getDateRenge,readFileName,storagePath)
+
+def showHoldStock(getDate,readFileName,storagePath)
 	begin
 		tmpHoldStockList=CSV.read(readFileName)
 	rescue Errno::ENOENT
@@ -114,7 +110,7 @@ def showHoldStock(getDateRenge,readFileName,storagePath)
 		holdStockList[i]['code']=tmpHoldStockList[i][0].to_i
 		holdStockList[i]['isNot']=true;
 	end
-	kessanList=searchCsv(getDateRenge,holdStockList,storagePath)
+	kessanList=searchCsv(getDate,holdStockList,storagePath)
 	
 	return kessanList
 end
@@ -128,9 +124,7 @@ def getHtmlData(url)
 end
 
 
-def searchCsv(getDateRange,searchStockList,storagePath)
-	startDate=getDateRange[0]
-	endDate=getDateRange[1]
+def searchCsv(getDate,searchStockList,storagePath)
 
 	if searchStockList[0] =='all'
 		isShowAll =true
@@ -139,31 +133,29 @@ def searchCsv(getDateRange,searchStockList,storagePath)
 	end
 
 	kessanList=Array.new
-	begin
-		isDayShowItem=false
-		dateStr=startDate.strftime("%Y%m%d")
-		#検索"
-		begin 
-			csv=CSV.open(storagePath+dateStr+'.csv',"r") 
-		rescue Errno::ENOENT
-			puts "エラー"
-			return -1;
-		end	
-		csv.each do |row|
-			if isShowAll==true
-				kessanList.push(row[0]+':'+row[1])
-			else
-				searchStockList.each do |search|
-					if row[0].to_i ==search['code']#見つかった
-						kessanList.push(search['code'].to_s+':'+row[1])
-						search['isNot']=false
-					end
+	
+	#検索
+	isDayShowItem=false
+	dateStr=getDate.strftime("%Y%m%d")
+	begin 
+		csv=CSV.open(storagePath+dateStr+'.csv',"r") 
+	rescue Errno::ENOENT
+		puts "openエラー"
+		return -1;
+	end	
+	csv.each do |row|
+		if isShowAll==true
+			kessanList.push(row[0]+':'+row[1])
+		else
+			searchStockList.each do |search|
+				if row[0].to_i ==search['code']#見つかった
+					kessanList.push(search['code'].to_s+':'+row[1])
+					search['isNot']=false
 				end
 			end
 		end
-		csv.close
-		startDate+=1
-	end while startDate <= endDate
+	end
+	csv.close
 	
 	return kessanList
 end
